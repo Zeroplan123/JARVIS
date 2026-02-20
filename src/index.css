@@ -9,8 +9,20 @@
   line-height: 1.5;
   font-weight: 400;
   color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0a0a0a;
+  --bg-0: #070809;
+  --bg-1: #0b0d10;
+  --bg-2: #101318;
+  --stroke-1: rgba(255, 255, 255, 0.08);
+  --stroke-2: rgba(255, 255, 255, 0.14);
+  --text-1: rgba(255, 255, 255, 0.92);
+  --text-2: rgba(255, 255, 255, 0.68);
+  --text-3: rgba(255, 255, 255, 0.46);
+  --accent: #68a7ff;
+  --accent-soft: rgba(104, 167, 255, 0.18);
+  --r-1: 8px;
+  --r-2: 10px;
+  color: var(--text-1);
+  background-color: var(--bg-0);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -25,8 +37,101 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #0a0a0a;
+  background: var(--bg-0);
   overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+::selection {
+  background: rgba(104, 167, 255, 0.22);
+}
+
+.jarvis-markdown {
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.jarvis-markdown p {
+  margin: 0;
+}
+
+.jarvis-markdown p + p {
+  margin-top: 0.75rem;
+}
+
+.jarvis-markdown h1,
+.jarvis-markdown h2,
+.jarvis-markdown h3 {
+  margin: 1rem 0 0.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.jarvis-markdown h1 { font-size: 18px; }
+.jarvis-markdown h2 { font-size: 16px; }
+.jarvis-markdown h3 { font-size: 14px; }
+
+.jarvis-markdown a {
+  color: var(--text-1);
+  text-decoration: underline;
+  text-decoration-color: rgba(104, 167, 255, 0.35);
+  text-underline-offset: 3px;
+}
+
+.jarvis-markdown code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.9em;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.1rem 0.3rem;
+  border-radius: 6px;
+}
+
+.jarvis-markdown pre {
+  margin: 0.75rem 0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.75rem;
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+.jarvis-markdown pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.jarvis-markdown ul,
+.jarvis-markdown ol {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.jarvis-markdown li {
+  margin: 0.25rem 0;
+}
+
+.jarvis-markdown blockquote {
+  margin: 0.75rem 0;
+  padding: 0.25rem 0 0.25rem 0.75rem;
+  border-left: 2px solid rgba(104, 167, 255, 0.35);
+  color: var(--text-2);
 }
 
 #root {

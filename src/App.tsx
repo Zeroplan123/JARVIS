@@ -1,12 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Message, JarvisState } from './types/jarvis';
 import { ChatDisplay } from './components/ChatDisplay';
 import { VoiceControl } from './components/VoiceControl';
 import { StatusIndicator } from './components/StatusIndicator';
+import { SettingsPanel } from './components/SettingsPanel';
+import { GoogleConnectPanel } from './components/GoogleConnectPanel';
+import { CommandPanel } from './components/CommandPanel';
+import { CalendarPanel } from './components/CalendarPanel';
+import { EmailPanel } from './components/EmailPanel';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition';
 import { useTextToSpeech } from './hooks/useTextToSpeech';
 import { geminiService } from './services/geminiService';
-import './App.css';
+import type { JarvisState, Message } from './types/jarvis';
 
 function App() {
   const [jarvisState, setJarvisState] = useState<JarvisState>({
@@ -15,6 +19,10 @@ function App() {
     isConnected: true,
     messages: []
   });
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [composerText, setComposerText] = useState('');
+  const [activeThreadId, setActiveThreadId] = useState('primary');
+  const [mode, setMode] = useState<'assistant' | 'chat'>('assistant');
 
   const { isListening, isAlwaysListening, transcript, wakeWordDetected, startListening, stopListening, toggleAlwaysListening, resetTranscript } = useSpeechRecognition();
   const { speak, stop: stopSpeaking } = useTextToSpeech();
@@ -130,7 +138,7 @@ function App() {
     stopSpeaking();
     stopListening();
     
-    // Get a new welcome message
+    // Get a new welcome message with current personality
     const welcomeMessage = await geminiService.getWelcomeMessage();
     const jarvisMessage: Message = {
       id: Date.now().toString(),
@@ -148,59 +156,160 @@ function App() {
     speak(welcomeMessage);
   }, [speak, stopSpeaking, stopListening]);
 
+  const handleSubmitComposer = useCallback(async () => {
+    const text = composerText.trim();
+    if (!text) return;
+    setComposerText('');
+    await handleUserInput(text);
+  }, [composerText, handleUserInput]);
+
+  const threads = [
+    { id: 'primary', title: 'Primary Session' },
+    { id: 'research', title: 'Research' },
+    { id: 'planning', title: 'Planning' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 text-gray-800 p-4 md:p-8">
-      {/* Main Container Card */}
-      <div className="max-w-6xl mx-auto">
-        {/* Header Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <span className="text-xl font-bold text-white">J</span>
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  JARVIS
-                </h1>
-                <p className="text-lg font-semibold text-gray-600">Just A Rather Very Intelligent System</p>
-              </div>
+    <div className="min-h-screen bg-[var(--bg-0)] text-[var(--text-1)]">
+      <div className="mx-auto max-w-[1400px] px-6 py-6">
+        <div className="grid grid-cols-12 gap-6">
+          <header className="col-span-12 flex items-center justify-between border border-[var(--stroke-1)] bg-[var(--bg-1)] px-5 py-4" style={{ borderRadius: 'var(--r-2)' }}>
+            <div className="min-w-0">
+              <div className="text-xs font-medium tracking-[0.18em] text-[var(--text-3)]">JARVIS</div>
+              <div className="text-base font-semibold tracking-[-0.01em]">Intelligence Console</div>
             </div>
-            
-            <StatusIndicator
-              isConnected={jarvisState.isConnected}
-              isListening={jarvisState.isListening}
-              isProcessing={jarvisState.isProcessing}
-            />
-          </div>
-        </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center border border-[var(--stroke-1)]" style={{ borderRadius: 'var(--r-1)' }}>
+                <button
+                  onClick={() => setMode('assistant')}
+                  className="h-9 px-3 text-sm font-medium"
+                  style={{
+                    borderTopLeftRadius: 'var(--r-1)',
+                    borderBottomLeftRadius: 'var(--r-1)',
+                    background: mode === 'assistant' ? 'rgba(255,255,255,0.04)' : 'transparent',
+                    color: mode === 'assistant' ? 'var(--text-1)' : 'var(--text-2)',
+                    borderRight: '1px solid var(--stroke-1)'
+                  }}
+                >
+                  Assistant
+                </button>
+                <button
+                  onClick={() => setMode('chat')}
+                  className="h-9 px-3 text-sm font-medium"
+                  style={{
+                    borderTopRightRadius: 'var(--r-1)',
+                    borderBottomRightRadius: 'var(--r-1)',
+                    background: mode === 'chat' ? 'rgba(255,255,255,0.04)' : 'transparent',
+                    color: mode === 'chat' ? 'var(--text-1)' : 'var(--text-2)'
+                  }}
+                >
+                  Chat
+                </button>
+              </div>
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                className="h-9 px-3 text-sm font-medium border border-[var(--stroke-1)] bg-transparent text-[var(--text-2)] hover:text-[var(--text-1)] hover:border-[var(--stroke-2)]"
+                style={{ borderRadius: 'var(--r-1)' }}
+              >
+                Settings
+              </button>
+              <StatusIndicator
+                isConnected={jarvisState.isConnected}
+                isListening={jarvisState.isListening}
+                isProcessing={jarvisState.isProcessing}
+              />
+            </div>
+          </header>
 
-        {/* Main Chat Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
-          <div className="flex flex-col h-[calc(100vh-200px)]">
-            <ChatDisplay
-              messages={jarvisState.messages}
-              isProcessing={jarvisState.isProcessing}
-            />
-            
-            <VoiceControl
-              isListening={jarvisState.isListening}
-              isAlwaysListening={isAlwaysListening}
-              isProcessing={jarvisState.isProcessing}
-              onStartListening={handleStartListening}
-              onStopListening={handleStopListening}
-              onToggleAlwaysListening={toggleAlwaysListening}
-              onClearConversation={handleClearConversation}
-            />
-          </div>
+          <aside className="col-span-12 md:col-span-4 lg:col-span-3 border border-[var(--stroke-1)] bg-[var(--bg-1)]" style={{ borderRadius: 'var(--r-2)' }}>
+            <div className="px-5 py-4 border-b border-[var(--stroke-1)]">
+              <div className="text-xs font-medium tracking-[0.18em] text-[var(--text-3)]">SESSIONS</div>
+            </div>
+            <div className="p-2">
+              {threads.map((t) => {
+                const active = t.id === activeThreadId;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setActiveThreadId(t.id)}
+                    className="w-full text-left px-4 py-3 border border-transparent hover:border-[var(--stroke-1)]"
+                    style={{ borderRadius: 'var(--r-1)', background: active ? 'rgba(255,255,255,0.03)' : 'transparent' }}
+                  >
+                    <div className="text-sm font-medium text-[var(--text-1)]">{t.title}</div>
+                    <div className="text-xs text-[var(--text-3)] mt-0.5">Thread ID: {t.id}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
+
+          <main className="col-span-12 md:col-span-8 lg:col-span-9 border border-[var(--stroke-1)] bg-[var(--bg-1)] flex flex-col" style={{ borderRadius: 'var(--r-2)', minHeight: 'calc(100vh - 132px)' }}>
+            {mode === 'assistant' ? (
+              <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5">
+                <div className="mx-auto w-full max-w-[980px] space-y-4">
+                  <GoogleConnectPanel />
+                  <CommandPanel />
+                  <CalendarPanel />
+                  <EmailPanel />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex-1 min-h-0">
+                  <ChatDisplay
+                    messages={jarvisState.messages}
+                    isProcessing={jarvisState.isProcessing}
+                  />
+                </div>
+
+                <div className="border-t border-[var(--stroke-1)] bg-[rgba(16,19,24,0.72)]" style={{ borderBottomLeftRadius: 'var(--r-2)', borderBottomRightRadius: 'var(--r-2)', backdropFilter: 'blur(10px)' }}>
+                  <div className="px-5 py-4">
+                    <div className="flex gap-3 items-end">
+                      <textarea
+                        value={composerText}
+                        onChange={(e) => setComposerText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            void handleSubmitComposer();
+                          }
+                        }}
+                        placeholder="Type a message…"
+                        className="flex-1 min-h-[48px] max-h-40 resize-none px-4 py-3 text-sm border border-[var(--stroke-1)] bg-[var(--bg-2)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:outline-none"
+                        style={{ borderRadius: 'var(--r-1)', boxShadow: '0 0 0 0 rgba(0,0,0,0)' }}
+                      />
+                      <button
+                        onClick={() => void handleSubmitComposer()}
+                        disabled={jarvisState.isProcessing}
+                        className="h-12 px-4 text-sm font-medium border border-[var(--stroke-1)] text-[var(--text-2)] hover:text-[var(--text-1)] hover:border-[var(--stroke-2)] disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ borderRadius: 'var(--r-1)' }}
+                      >
+                        Send
+                      </button>
+                    </div>
+                    <div className="mt-3">
+                      <VoiceControl
+                        isListening={jarvisState.isListening}
+                        isAlwaysListening={isAlwaysListening}
+                        isProcessing={jarvisState.isProcessing}
+                        onStartListening={handleStartListening}
+                        onStopListening={handleStopListening}
+                        onToggleAlwaysListening={toggleAlwaysListening}
+                        onClearConversation={handleClearConversation}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </main>
         </div>
       </div>
 
-      {/* Subtle Background Effects */}
-      <div className="fixed inset-0 pointer-events-none -z-10">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl"></div>
-      </div>
+      <SettingsPanel
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   );
 }

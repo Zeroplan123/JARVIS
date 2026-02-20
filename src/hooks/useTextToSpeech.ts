@@ -1,7 +1,9 @@
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import type { VoiceSettings } from '../types/jarvis';
 
 export const useTextToSpeech = () => {
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  
   const defaultSettings: VoiceSettings = {
     lang: 'id-ID',
     rate: 0.85,
@@ -25,6 +27,19 @@ export const useTextToSpeech = () => {
     utterance.rate = finalSettings.rate;
     utterance.pitch = finalSettings.pitch;
     utterance.volume = finalSettings.volume;
+
+    // Set up event listeners for speaking state
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+    };
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+    };
+
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+    };
 
     // Wait for voices to load if not already loaded
     const setVoice = () => {
@@ -76,7 +91,19 @@ export const useTextToSpeech = () => {
 
   const stop = useCallback(() => {
     speechSynthesis.cancel();
+    setIsSpeaking(false);
   }, []);
 
-  return { speak, stop };
+  // Listen for global speech synthesis events
+  useEffect(() => {
+    speechSynthesis.addEventListener('voiceschanged', () => {
+      // Force update when voices change
+    });
+
+    return () => {
+      speechSynthesis.removeEventListener('voiceschanged', () => {});
+    };
+  }, []);
+
+  return { speak, stop, isSpeaking };
 };

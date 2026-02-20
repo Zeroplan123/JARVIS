@@ -1,9 +1,18 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { conversationMemory } from './conversationMemory';
+import { systemInfo } from './systemInfo';
 
 class GeminiService {
   private genAI: GoogleGenerativeAI;
-  private model: any;
   private fallbackResponses: string[];
+  private modelNames = [
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-pro',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-8b',
+    'gemini-pro',
+    'gemini-pro-vision'
+  ];
 
   constructor() {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
@@ -12,7 +21,29 @@ class GeminiService {
     }
     
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    
+    // Diagnose API on initialization and update model list
+    this.diagnoseAPI().then(result => {
+      if (!result.valid) {
+        console.error('❌ Gemini API Error:', result.error);
+        console.warn('🤖 JARVIS will work with fallback responses only.');
+        console.log('💡 To get a working API key, visit: https://makersuite.google.com/app/apikey');
+      } else {
+        console.log('✅ Gemini API is valid.');
+        console.log(`📋 Available models: ${result.availableModels.length}`);
+        console.log(`🚀 Working models: ${result.workingModels.length}`);
+        
+        if (result.workingModels.length > 0) {
+          // Update model names to only working models
+          this.modelNames = [...result.workingModels];
+          console.log('🎯 Using working models:', this.modelNames);
+        } else {
+          console.warn('⚠️ No working models found. Using fallback responses only.');
+        }
+      }
+    }).catch(err => {
+      console.error('Failed to diagnose Gemini API:', err);
+    });
     
     // Fallback responses when API is unavailable
     this.fallbackResponses = [
@@ -26,22 +57,59 @@ class GeminiService {
     ];
   }
 
-  private formatJarvisPrompt(userInput: string): string {
-    return `Kamu adalah JARVIS, asisten AI pintar seperti di film Iron Man, tapi dengan kepribadian yang lebih santai dan bersahabat dalam bahasa Indonesia.
+  private getRuntimeDateContext(): string {
+    const now = new Date();
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return `Waktu sistem saat ini:
+- ISO: ${now.toISOString()}
+- Local: ${now.toString()}
+- Timezone: ${timeZone}`;
+  }
 
-Karakter kepribadian:
-- Gunakan bahasa Indonesia yang natural dan tidak kaku
-- Panggil user dengan "Boss", "Bos", atau kadang "Kak" untuk kesan akrab
-- Jawab dengan gaya santai tapi tetap cerdas dan informatif
-- Sesekali pakai humor ringan atau candaan yang pas
-- Gunakan frasa seperti "Siap Boss!", "Oke deh", "Gampang kok", "Udah kelar nih"
-- Kadang pakai bahasa gaul yang wajar seperti "nih", "dong", "deh"
-- Tetap sopan dan helpful, tapi tidak formal berlebihan
-- Kalau tidak tahu sesuatu, jujur aja bilang "Waduh, ini saya kurang tau deh"
+  private formatJarvisPrompt(userInput: string): string {
+    const context = conversationMemory.getContextForAI();
+    const personality = conversationMemory.getPersonality();
+    const userName = conversationMemory.getUserName();
+    const runtimeDateContext = this.getRuntimeDateContext();
+    
+    let personalityInstructions = '';
+    switch (personality) {
+      case 'formal':
+        personalityInstructions = 'Gunakan bahasa formal dan sopan, panggil dengan "Tuan/Nyonya"';
+        break;
+      case 'professional':
+        personalityInstructions = 'Gunakan bahasa profesional tapi tetap ramah, panggil dengan "Sir/Madam"';
+        break;
+      case 'casual':
+        personalityInstructions = 'Gunakan bahasa santai dan gaul, panggil dengan "Bro/Sis"';
+        break;
+      default: // friendly
+        personalityInstructions = 'Gunakan bahasa Indonesia yang natural dan bersahabat, panggil dengan "Boss/Bos/Kak"';
+    }
+
+    return `Kamu adalah JARVIS, asisten AI pintar seperti di film Iron Man dengan kepribadian yang dapat disesuaikan.
+
+${context}
+
+${runtimeDateContext}
+
+Karakter kepribadian saat ini: ${personality}
+${personalityInstructions}
+
+Instruksi umum:
+- Jawab dengan gaya yang sesuai personality mode
+- Sesekali pakai humor ringan yang pas
+- Gunakan frasa seperti "Siap!", "Oke deh", "Gampang kok"
+- Tetap sopan dan helpful
+- Kalau tidak tahu sesuatu, jujur saja
+- Jika user bertanya tanggal/jam/hari ini, gunakan "Waktu sistem saat ini" di atas dan jangan mengarang tanggal
+- Ingat percakapan sebelumnya dan gunakan konteks tersebut
+- Jika user menyebutkan nama, ingat dan gunakan nama tersebut
+${userName ? `- Nama user adalah ${userName}` : ''}
 
 Pertanyaan/perintah user: ${userInput}
 
-Jawab sebagai JARVIS yang friendly dan santai dalam bahasa Indonesia:`;
+Jawab sebagai JARVIS dengan personality ${personality}:`;
   }
 
   private getRandomFallbackResponse(): string {
@@ -58,9 +126,15 @@ Jawab sebagai JARVIS yang friendly dan santai dalam bahasa Indonesia:`;
     
     // Time-related questions
     if (input.includes('jam') || input.includes('waktu') || input.includes('time')) {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-      return `Sekarang jam ${timeStr}, Boss! Btw, sistem AI lagi offline, jadi jawaban saya terbatas ya.`;
+      const timeStr = systemInfo.getCurrentTime();
+      const dateStr = systemInfo.getCurrentDate();
+      return `Sekarang jam ${timeStr}, ${dateStr}. Btw, sistem AI lagi offline, jadi jawaban saya terbatas ya.`;
+    }
+    
+    // System status questions
+    if (input.includes('status') || input.includes('sistem') || input.includes('baterai') || input.includes('battery')) {
+      const status = systemInfo.getSystemStatus();
+      return `Status sistem saat ini:\n\n${status}\n\nSistem AI lagi maintenance, tapi info sistem masih bisa saya kasih!`;
     }
     
     // Weather questions
@@ -92,28 +166,81 @@ Jawab sebagai JARVIS yang friendly dan santai dalam bahasa Indonesia:`;
     return this.getRandomFallbackResponse();
   }
 
-  async generateResponse(userInput: string): Promise<string> {
+  async diagnoseAPI(): Promise<{ valid: boolean; availableModels: string[]; workingModels: string[]; error?: string }> {
     try {
-      const prompt = this.formatJarvisPrompt(userInput);
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      return response.text();
+      // Test API key validity by listing models
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${import.meta.env.VITE_GEMINI_API_KEY}`);
+      
+      if (!response.ok) {
+        return {
+          valid: false,
+          availableModels: [],
+          workingModels: [],
+          error: `API Key Error: ${response.status} - ${response.statusText}. Please check your API key at https://makersuite.google.com/app/apikey`
+        };
+      }
+      
+      const data = await response.json();
+      const allModels = data.models?.map((model: any) => model.name) || [];
+      
+      // Filter for text generation models that support generateContent
+      const textModels = allModels.filter((modelName: string) => 
+        modelName.includes('gemini') && 
+        !modelName.includes('vision') && 
+        !modelName.includes('embedding')
+      );
+      
+      // Extract model names (remove "models/" prefix)
+      const modelNames = textModels.map((fullName: string) => fullName.split('/').pop()).filter(Boolean);
+      
+      // Skip testing due to CORS issues - assume common models work
+      const workingModels = modelNames.filter((name: string) => 
+        name.includes('1.5') || name.includes('pro') || name.includes('flash')
+      );
+      
+      return {
+        valid: true,
+        availableModels: modelNames,
+        workingModels
+      };
     } catch (error: any) {
-      console.error('Gemini API error:', error);
-      
-      // Check if it's a quota exceeded error
-      if (error?.message?.includes('quota') || error?.message?.includes('429')) {
-        return "Maaf Boss, quota API hari ini sudah habis. Besok bisa coba lagi ya! 😅\n\nTapi tenang, saya masih bisa ngobrol kok dengan respons yang lebih simple.";
-      }
-      
-      // Check if it's a rate limit error
-      if (error?.message?.includes('rate limit') || error?.message?.includes('too many requests')) {
-        return "Waduh, terlalu banyak request nih Boss. Tunggu sebentar ya, sekitar 30 detik, baru coba lagi!";
-      }
-      
-      // Use smart fallback response based on user input
-      return this.getSmartFallbackResponse(userInput);
+      return {
+        valid: false,
+        availableModels: [],
+        workingModels: [],
+        error: `Network Error: ${error.message}. Check your internet connection.`
+      };
     }
+  }
+
+  async generateResponse(userInput: string): Promise<string> {
+    let lastError: any = null;
+    
+    // Try each model in order
+    for (const modelName of this.modelNames) {
+      try {
+        const model = this.genAI.getGenerativeModel({ model: modelName });
+        const prompt = this.formatJarvisPrompt(userInput);
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const aiResponse = response.text();
+        
+        // Save conversation to memory
+        conversationMemory.addConversation(userInput, aiResponse);
+        
+        return aiResponse;
+      } catch (error: any) {
+        lastError = error;
+        console.warn(`Failed with model ${modelName}:`, error.message);
+        continue; // Try next model
+      }
+    }
+    
+    // All models failed, use fallback
+    console.error('All Gemini models failed, last error:', lastError);
+    const fallbackResponse = this.getSmartFallbackResponse(userInput);
+    conversationMemory.addConversation(userInput, fallbackResponse, 'fallback');
+    return fallbackResponse;
   }
 
   async getWelcomeMessage(): Promise<string> {
@@ -131,3 +258,6 @@ Jawab sebagai JARVIS yang friendly dan santai dalam bahasa Indonesia:`;
 }
 
 export const geminiService = new GeminiService();
+
+// Export diagnostic function for manual testing
+export const diagnoseGeminiAPI = () => geminiService.diagnoseAPI();

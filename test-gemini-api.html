@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gemini API Test</title>
+</head>
+<body>
+    <h1>Gemini API Diagnostic Tool</h1>
+    <button onclick="testAPI()">Test API Key</button>
+    <div id="results"></div>
+
+    <script>
+        async function testAPI() {
+            const apiKey = 'AIzaSyBpanh5v1PQAH_XkCUxDNiXy12IJTwcqOk';
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                // Test 1: List available models
+                console.log('Testing API key validity...');
+                const modelsResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+                
+                if (!modelsResponse.ok) {
+                    resultsDiv.innerHTML = `<h3>❌ API Key Invalid</h3><p>Status: ${modelsResponse.status} - ${modelsResponse.statusText}</p>`;
+                    return;
+                }
+                
+                const modelsData = await modelsResponse.json();
+                const availableModels = modelsData.models || [];
+                
+                resultsDiv.innerHTML = `
+                    <h3>✅ API Key Valid</h3>
+                    <h4>Available Models (${availableModels.length}):</h4>
+                    <ul>
+                        ${availableModels.map(model => `<li>${model.name} - ${model.displayName || 'No name'}</li>`).join('')}
+                    </ul>
+                `;
+                
+                // Test 2: Try each model
+                console.log('Testing each model...');
+                for (const model of availableModels) {
+                    const modelName = model.name.split('/').pop();
+                    try {
+                        const testResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                contents: [{
+                                    parts: [{
+                                        text: "Hello, test message"
+                                    }]
+                                }]
+                            })
+                        });
+                        
+                        if (testResponse.ok) {
+                            resultsDiv.innerHTML += `<p>✅ ${modelName} - Works!</p>`;
+                        } else {
+                            resultsDiv.innerHTML += `<p>❌ ${modelName} - Failed: ${testResponse.status}</p>`;
+                        }
+                    } catch (error) {
+                        resultsDiv.innerHTML += `<p>❌ ${modelName} - Error: ${error.message}</p>`;
+                    }
+                }
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<h3>❌ Network Error</h3><p>${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
