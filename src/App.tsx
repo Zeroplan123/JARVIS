@@ -12,6 +12,25 @@ import { useTextToSpeech } from './hooks/useTextToSpeech';
 import { geminiService } from './services/geminiService';
 import type { JarvisState, Message } from './types/jarvis';
 
+function tryParseActionJson(text: string): any | null {
+  const t = text.trim();
+  if (!t.startsWith('{') || !t.endsWith('}')) return null;
+  try {
+    return JSON.parse(t);
+  } catch {
+    return null;
+  }
+}
+
+function isSafeHttpUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 function App() {
   const [jarvisState, setJarvisState] = useState<JarvisState>({
     isListening: false,
@@ -90,11 +109,29 @@ function App() {
     try {
       // Get AI response
       const aiResponse = await geminiService.generateResponse(input);
+
+      const parsedAction = tryParseActionJson(aiResponse);
+      const isOpenUrl = parsedAction?.action === 'open_url' && typeof parsedAction?.url === 'string';
+
+      let finalContent = aiResponse;
+      let shouldSpeak = true;
+
+      if (isOpenUrl) {
+        const url = String(parsedAction.url);
+        if (isSafeHttpUrl(url)) {
+          const opened = window.open(url, '_blank', 'noopener,noreferrer');
+          finalContent = opened ? `Siap. Membuka: ${url}` : `Siap. Saya sudah coba membuka link ini, tapi browser memblokir popup. Silakan klik: ${url}`;
+          shouldSpeak = true;
+        } else {
+          finalContent = `Maaf, saya tidak bisa membuka URL yang tidak aman: ${url}`;
+          shouldSpeak = true;
+        }
+      }
       
       const jarvisMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'jarvis',
-        content: aiResponse,
+        content: finalContent,
         timestamp: new Date()
       };
 
@@ -105,7 +142,9 @@ function App() {
       }));
 
       // Speak the response
-      speak(aiResponse);
+      if (shouldSpeak) {
+        speak(finalContent);
+      }
 
     } catch (error) {
       console.error('Error processing user input:', error);

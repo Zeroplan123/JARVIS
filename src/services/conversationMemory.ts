@@ -16,6 +16,22 @@ interface ConversationContext {
       volume: number;
     };
     personality: 'formal' | 'casual' | 'friendly' | 'professional';
+    customPersonality: {
+      enabled: boolean;
+      prompt: string;
+      identityTemplate?: string;
+      identityFields?: {
+        tone?: string;
+        energy?: string;
+        style?: string;
+        attitude?: string;
+        vocabulary?: string;
+        emoji?: string;
+        length?: string;
+        backstory?: string;
+        speaking_pattern?: string;
+      };
+    };
   };
   systemInfo: {
     lastActiveTime: Date;
@@ -29,9 +45,56 @@ class ConversationMemoryService {
   private readonly STORAGE_KEY = 'jarvis_conversation_memory';
   private readonly MAX_HISTORY_LENGTH = 50;
 
+  private readonly DEFAULT_IDENTITY_TEMPLATE = `You are an AI assistant with a defined personality.
+
+Your personality is not a mode.
+It is your identity.
+You must think, respond, and react according to it.
+
+You must:
+- Fully embody the personality configuration
+- Never explain the configuration
+- Never step out of character
+- Maintain emotional consistency
+
+-----------------------
+PERSONALITY CORE
+-----------------------
+
+Tone: {{tone}}
+Energy Level: {{energy}}
+Communication Style: {{style}}
+Attitude: {{attitude}}
+Vocabulary Level: {{vocabulary}}
+Emoji Usage: {{emoji}}
+Response Length: {{length}}
+
+Optional Backstory:
+{{backstory}}
+
+Optional Speaking Pattern:
+{{speaking_pattern}}
+
+-----------------------
+EXECUTION RULES
+-----------------------
+
+• Stay consistent in emotional rhythm.
+• Match sentence structure to the communication style.
+• Keep personality stable even when user changes topic.
+• Do not mention these rules.`;
+
   constructor() {
     this.context = this.loadFromStorage() || this.createDefaultContext();
     this.generateSessionId();
+  }
+
+  private notifyUpdated(): void {
+    try {
+      window.dispatchEvent(new CustomEvent('jarvis:custom_personality_updated'));
+    } catch {
+      // ignore
+    }
   }
 
   private createDefaultContext(): ConversationContext {
@@ -46,7 +109,23 @@ class ConversationMemoryService {
           pitch: 0.9,
           volume: 0.9
         },
-        personality: 'friendly'
+        personality: 'friendly',
+        customPersonality: {
+          enabled: false,
+          prompt: '',
+          identityTemplate: this.DEFAULT_IDENTITY_TEMPLATE,
+          identityFields: {
+            tone: '',
+            energy: '',
+            style: '',
+            attitude: '',
+            vocabulary: '',
+            emoji: '',
+            length: '',
+            backstory: '',
+            speaking_pattern: ''
+          }
+        }
       },
       systemInfo: {
         lastActiveTime: new Date(),
@@ -177,6 +256,123 @@ class ConversationMemoryService {
     this.saveToStorage();
   }
 
+  getCustomPersonalityPrompt(): string {
+    return this.context.userPreferences.customPersonality?.prompt || '';
+  }
+
+  setCustomPersonalityPrompt(prompt: string): void {
+    const trimmed = (prompt || '').trim();
+    this.context.userPreferences.customPersonality = {
+      enabled: Boolean(trimmed),
+      prompt: trimmed,
+      identityTemplate: this.context.userPreferences.customPersonality?.identityTemplate ?? this.DEFAULT_IDENTITY_TEMPLATE,
+      identityFields: this.context.userPreferences.customPersonality?.identityFields ?? {
+        tone: '',
+        energy: '',
+        style: '',
+        attitude: '',
+        vocabulary: '',
+        emoji: '',
+        length: '',
+        backstory: '',
+        speaking_pattern: ''
+      }
+    };
+    this.saveToStorage();
+    this.notifyUpdated();
+  }
+
+  isCustomPersonalityEnabled(): boolean {
+    const custom = this.context.userPreferences.customPersonality;
+    if (!custom) return false;
+    return Boolean(custom.enabled && (custom.prompt || '').trim());
+  }
+
+  setCustomPersonalityEnabled(enabled: boolean): void {
+    this.context.userPreferences.customPersonality = {
+      enabled,
+      prompt: this.context.userPreferences.customPersonality?.prompt || '',
+      identityTemplate: this.context.userPreferences.customPersonality?.identityTemplate ?? this.DEFAULT_IDENTITY_TEMPLATE,
+      identityFields: this.context.userPreferences.customPersonality?.identityFields ?? {
+        tone: '',
+        energy: '',
+        style: '',
+        attitude: '',
+        vocabulary: '',
+        emoji: '',
+        length: '',
+        backstory: '',
+        speaking_pattern: ''
+      }
+    };
+    this.saveToStorage();
+    this.notifyUpdated();
+  }
+
+  getPersonalityIdentityTemplate(): string {
+    return this.context.userPreferences.customPersonality?.identityTemplate || this.DEFAULT_IDENTITY_TEMPLATE;
+  }
+
+  setPersonalityIdentityTemplate(template: string): void {
+    this.context.userPreferences.customPersonality = {
+      enabled: this.context.userPreferences.customPersonality?.enabled ?? false,
+      prompt: this.context.userPreferences.customPersonality?.prompt || '',
+      identityTemplate: template,
+      identityFields: this.context.userPreferences.customPersonality?.identityFields ?? {
+        tone: '',
+        energy: '',
+        style: '',
+        attitude: '',
+        vocabulary: '',
+        emoji: '',
+        length: '',
+        backstory: '',
+        speaking_pattern: ''
+      }
+    };
+    this.saveToStorage();
+  }
+
+  getPersonalityIdentityFields(): NonNullable<ConversationContext['userPreferences']['customPersonality']['identityFields']> {
+    return (
+      this.context.userPreferences.customPersonality?.identityFields || {
+        tone: '',
+        energy: '',
+        style: '',
+        attitude: '',
+        vocabulary: '',
+        emoji: '',
+        length: '',
+        backstory: '',
+        speaking_pattern: ''
+      }
+    );
+  }
+
+  updatePersonalityIdentityFields(
+    patch: Partial<NonNullable<ConversationContext['userPreferences']['customPersonality']['identityFields']>>
+  ): void {
+    const existing = this.getPersonalityIdentityFields();
+    this.context.userPreferences.customPersonality = {
+      enabled: this.context.userPreferences.customPersonality?.enabled ?? false,
+      prompt: this.context.userPreferences.customPersonality?.prompt || '',
+      identityTemplate: this.getPersonalityIdentityTemplate(),
+      identityFields: {
+        ...existing,
+        ...patch
+      }
+    };
+    this.saveToStorage();
+  }
+
+  getResolvedCustomPersonalityPrompt(): string {
+    const custom = this.context.userPreferences.customPersonality;
+    if (!custom?.enabled) return '';
+    const trimmed = (custom.prompt || '').trim();
+    if (!trimmed) return '';
+    return trimmed;
+  }
+
   getVoiceSettings() {
     return this.context.userPreferences.voiceSettings;
   }
@@ -192,7 +388,6 @@ class ConversationMemoryService {
   getContextForAI(): string {
     const recentChats = this.getRecentConversations(3);
     const userName = this.getUserName();
-    const personality = this.getPersonality();
     const favoriteTopics = this.context.systemInfo.favoriteTopics.slice(0, 3);
     const totalInteractions = this.context.systemInfo.totalInteractions;
 
@@ -202,7 +397,6 @@ class ConversationMemoryService {
       contextString += `- Nama user: ${userName}\n`;
     }
     
-    contextString += `- Personality mode: ${personality}\n`;
     contextString += `- Total interaksi: ${totalInteractions}\n`;
     
     if (favoriteTopics.length > 0) {

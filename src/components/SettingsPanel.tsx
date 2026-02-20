@@ -9,7 +9,7 @@ interface SettingsPanelProps {
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
   const [userName, setUserName] = useState(conversationMemory.getUserName() || '');
-  const [personality, setPersonality] = useState(conversationMemory.getPersonality());
+  const [customPersonalityPrompt, setCustomPersonalityPrompt] = useState(conversationMemory.getCustomPersonalityPrompt());
   const [voiceSettings, setVoiceSettings] = useState(conversationMemory.getVoiceSettings());
   const [stats, setStats] = useState(conversationMemory.getStats());
   const [systemStatus, setSystemStatus] = useState('');
@@ -17,6 +17,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
     if (isOpen) {
       setStats(conversationMemory.getStats());
       setSystemStatus(systemInfo.getSystemStatus());
+      setCustomPersonalityPrompt(conversationMemory.getCustomPersonalityPrompt());
     }
   }, [isOpen]);
 
@@ -27,9 +28,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
     }
   };
 
-  const handlePersonalityChange = (newPersonality: 'formal' | 'casual' | 'friendly' | 'professional') => {
-    setPersonality(newPersonality);
-    conversationMemory.setPersonality(newPersonality);
+  const handleSaveCustomPersonality = () => {
+    conversationMemory.setCustomPersonalityPrompt(customPersonalityPrompt);
+    alert('Custom personality berhasil disimpan!');
   };
 
   const handleVoiceSettingChange = (setting: string, value: number) => {
@@ -118,28 +119,28 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
             </div>
 
             <div className="mt-6">
-              <div className="text-xs font-medium tracking-[0.12em] text-[var(--text-3)]">PERSONALITY</div>
-              <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
-                {[
-                  { value: 'friendly', label: 'Friendly', desc: 'Boss/Kak' },
-                  { value: 'formal', label: 'Formal', desc: 'Tuan/Nyonya' },
-                  { value: 'professional', label: 'Professional', desc: 'Sir/Madam' },
-                  { value: 'casual', label: 'Casual', desc: 'Bro/Sis' }
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => handlePersonalityChange(option.value as any)}
-                    className="p-3 text-left border"
-                    style={{
-                      borderRadius: 'var(--r-1)',
-                      borderColor: personality === option.value ? 'var(--accent)' : 'var(--stroke-1)',
-                      background: personality === option.value ? 'rgba(104,167,255,0.06)' : 'transparent'
-                    }}
-                  >
-                    <div className="text-sm font-medium text-[var(--text-1)]">{option.label}</div>
-                    <div className="mt-0.5 text-xs text-[var(--text-3)]">{option.desc}</div>
-                  </button>
-                ))}
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-xs font-medium tracking-[0.12em] text-[var(--text-3)]">INSTRUKSI KHUSUS</div>
+                  <div className="mt-1 text-sm text-[var(--text-2)]">Tulis instruksi perilaku/gaya/nada. Jika diisi, ini akan diprioritaskan.</div>
+                </div>
+              </div>
+              <textarea
+                value={customPersonalityPrompt}
+                onChange={(e) => setCustomPersonalityPrompt(e.target.value)}
+                placeholder={`Contoh:\nKamu adalah teman sejati saya yang menemani saya sepanjang waktu.\nGunakan bahasa Indonesia yang hangat dan suportif.\nJika diminta aksi, keluarkan JSON sesuai format.`}
+                className="mt-3 w-full min-h-[140px] px-4 py-3 text-sm border border-[var(--stroke-1)] bg-[var(--bg-1)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:outline-none"
+                style={{ borderRadius: 'var(--r-1)' }}
+              />
+
+              <div className="mt-3 flex justify-end">
+                <button
+                  onClick={handleSaveCustomPersonality}
+                  className="h-9 px-3 text-sm font-medium border border-[var(--stroke-1)] text-[var(--text-2)] hover:text-[var(--text-1)] hover:border-[var(--stroke-2)]"
+                  style={{ borderRadius: 'var(--r-1)' }}
+                >
+                  Save
+                </button>
               </div>
             </div>
           </section>
