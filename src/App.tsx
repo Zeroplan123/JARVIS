@@ -225,7 +225,7 @@ function App() {
                   style={{
                     borderTopLeftRadius: 'var(--r-1)',
                     borderBottomLeftRadius: 'var(--r-1)',
-                    background: mode === 'assistant' ? 'rgba(255,255,255,0.04)' : 'transparent',
+                    background: mode === 'assistant' ? 'var(--accent-soft)' : 'transparent',
                     color: mode === 'assistant' ? 'var(--text-1)' : 'var(--text-2)',
                     borderRight: '1px solid var(--stroke-1)'
                   }}
@@ -238,7 +238,7 @@ function App() {
                   style={{
                     borderTopRightRadius: 'var(--r-1)',
                     borderBottomRightRadius: 'var(--r-1)',
-                    background: mode === 'chat' ? 'rgba(255,255,255,0.04)' : 'transparent',
+                    background: mode === 'chat' ? 'var(--accent-soft)' : 'transparent',
                     color: mode === 'chat' ? 'var(--text-1)' : 'var(--text-2)'
                   }}
                 >
@@ -272,7 +272,7 @@ function App() {
                     key={t.id}
                     onClick={() => setActiveThreadId(t.id)}
                     className="w-full text-left px-4 py-3 border border-transparent hover:border-[var(--stroke-1)]"
-                    style={{ borderRadius: 'var(--r-1)', background: active ? 'rgba(255,255,255,0.03)' : 'transparent' }}
+                    style={{ borderRadius: 'var(--r-1)', background: active ? 'var(--accent-soft)' : 'transparent' }}
                   >
                     <div className="text-sm font-medium text-[var(--text-1)]">{t.title}</div>
                     <div className="text-xs text-[var(--text-3)] mt-0.5">Thread ID: {t.id}</div>
@@ -285,11 +285,17 @@ function App() {
           <main className="col-span-12 md:col-span-8 lg:col-span-9 border border-[var(--stroke-1)] bg-[var(--bg-1)] flex flex-col" style={{ borderRadius: 'var(--r-2)', minHeight: 'calc(100vh - 132px)' }}>
             {mode === 'assistant' ? (
               <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5">
-                <div className="mx-auto w-full max-w-[980px] space-y-4">
-                  <GoogleConnectPanel />
-                  <CommandPanel />
-                  <CalendarPanel />
-                  <EmailPanel />
+                <div className="mx-auto w-full max-w-[1100px]">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="lg:col-span-2">
+                      <GoogleConnectPanel />
+                    </div>
+                    <CommandPanel />
+                    <CalendarPanel />
+                    <div className="lg:col-span-2">
+                      <EmailPanel />
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -301,7 +307,14 @@ function App() {
                   />
                 </div>
 
-                <div className="border-t border-[var(--stroke-1)] bg-[rgba(16,19,24,0.72)]" style={{ borderBottomLeftRadius: 'var(--r-2)', borderBottomRightRadius: 'var(--r-2)', backdropFilter: 'blur(10px)' }}>
+                <div
+                  className="border-t border-[var(--stroke-1)] bg-[var(--bg-1)]"
+                  style={{
+                    borderBottomLeftRadius: 'var(--r-2)',
+                    borderBottomRightRadius: 'var(--r-2)',
+                    boxShadow: 'var(--shadow-1)'
+                  }}
+                >
                   <div className="px-5 py-4">
                     <div className="flex gap-3 items-end">
                       <textarea
@@ -314,8 +327,8 @@ function App() {
                           }
                         }}
                         placeholder="Type a message…"
-                        className="flex-1 min-h-[48px] max-h-40 resize-none px-4 py-3 text-sm border border-[var(--stroke-1)] bg-[var(--bg-2)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:outline-none"
-                        style={{ borderRadius: 'var(--r-1)', boxShadow: '0 0 0 0 rgba(0,0,0,0)' }}
+                        className="jarvis-input flex-1 min-h-[48px] max-h-40 resize-none px-4 py-3 text-sm focus:outline-none"
+                        style={{ borderRadius: 'var(--r-1)' }}
                       />
                       <button
                         onClick={() => void handleSubmitComposer()}

@@ -40,7 +40,7 @@ export const EmailPanel: React.FC = () => {
   }
 
   return (
-    <section className="border border-[var(--stroke-1)] bg-[var(--bg-1)] p-5" style={{ borderRadius: 'var(--r-2)' }}>
+    <section className="jarvis-surface p-5" style={{ borderRadius: 'var(--r-2)' }}>
       <div>
         <div className="text-xs font-medium tracking-[0.18em] text-[var(--text-3)]">GMAIL</div>
         <div className="mt-2 text-base font-semibold tracking-[-0.01em]">Draft + send</div>
@@ -57,7 +57,7 @@ export const EmailPanel: React.FC = () => {
           <input
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="mt-2 w-full h-11 px-4 text-sm border border-[var(--stroke-1)] bg-[var(--bg-2)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:outline-none"
+            className="jarvis-input mt-2 w-full h-11 px-4 text-sm focus:outline-none"
             style={{ borderRadius: 'var(--r-1)' }}
             placeholder="john@example.com"
             disabled={!authenticated}
@@ -68,7 +68,7 @@ export const EmailPanel: React.FC = () => {
           <input
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            className="mt-2 w-full h-11 px-4 text-sm border border-[var(--stroke-1)] bg-[var(--bg-2)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:outline-none"
+            className="jarvis-input mt-2 w-full h-11 px-4 text-sm focus:outline-none"
             style={{ borderRadius: 'var(--r-1)' }}
             placeholder="Project update"
             disabled={!authenticated}
@@ -79,7 +79,7 @@ export const EmailPanel: React.FC = () => {
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            className="mt-2 w-full min-h-[120px] px-4 py-3 text-sm border border-[var(--stroke-1)] bg-[var(--bg-2)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:outline-none"
+            className="jarvis-input mt-2 w-full min-h-[120px] px-4 py-3 text-sm focus:outline-none"
             style={{ borderRadius: 'var(--r-1)' }}
             placeholder="Write the email content…"
             disabled={!authenticated}

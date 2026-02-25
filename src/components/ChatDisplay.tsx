@@ -42,52 +42,68 @@ export const ChatDisplay: React.FC<ChatDisplayProps> = ({ messages, isProcessing
     }
   };
 
+  const isUser = (m: Message) => m.role === 'user';
+
   return (
-    <div className="h-full overflow-y-auto px-5 py-5">
+    <div className="h-full overflow-y-auto px-5 py-6">
       <div className="mx-auto w-full max-w-[980px]">
         {messages.length === 0 && (
           <div className="py-16">
             <div className="text-xs font-medium tracking-[0.18em] text-[var(--text-3)]">READY</div>
-            <div className="mt-2 text-2xl font-semibold tracking-[-0.02em]">Awaiting input</div>
+            <div className="mt-2 text-2xl font-semibold tracking-[-0.02em]">Your AI workspace is ready</div>
             <div className="mt-3 text-sm text-[var(--text-2)]">
-              Use voice control or type a message in the composer.
+              Type a message below, or use voice control.
             </div>
           </div>
         )}
 
-        <div className="space-y-5">
-          {messages.map((message) => (
-            <div key={message.id} className="grid grid-cols-12 gap-4">
-              <div className="col-span-12 md:col-span-2">
-                <div className="text-xs font-medium tracking-[0.18em] text-[var(--text-3)]">
-                  {message.role === 'user' ? 'USER' : 'JARVIS'}
+        <div className="space-y-4">
+          {messages.map((message) => {
+            const mine = isUser(message);
+            return (
+              <div key={message.id} className={mine ? 'flex justify-end' : 'flex justify-start'}>
+                <div className="min-w-0 max-w-[92%] md:max-w-[78%]">
+                  <div className={mine ? 'flex justify-end' : 'flex justify-start'}>
+                    <div className="text-[11px] font-medium tracking-[0.16em] text-[var(--text-3)]">
+                      {mine ? 'YOU' : 'JARVIS'}
+                      <span className="ml-2 font-mono tracking-[0.08em]">{formatTime(message.timestamp)}</span>
+                    </div>
+                  </div>
+
+                  <div
+                    className="mt-2 border border-[var(--stroke-1)] px-4 py-3"
+                    style={{
+                      borderRadius: 'var(--r-2)',
+                      background: mine ? 'var(--bg-1)' : 'var(--bg-2)',
+                      boxShadow: 'var(--shadow-1)'
+                    }}
+                  >
+                    <div
+                      className="jarvis-markdown text-[var(--text-1)]"
+                      dangerouslySetInnerHTML={{ __html: formatMessage(message.content) }}
+                    />
+                  </div>
                 </div>
-                <div className="mt-1 text-xs font-mono text-[var(--text-3)]">{formatTime(message.timestamp)}</div>
               </div>
-              <div
-                className="col-span-12 md:col-span-10 border border-[var(--stroke-1)] bg-[var(--bg-2)] px-4 py-3"
-                style={{ borderRadius: 'var(--r-1)' }}
-              >
-                <div
-                  className="jarvis-markdown text-[var(--text-1)]"
-                  dangerouslySetInnerHTML={{ __html: formatMessage(message.content) }}
-                />
-              </div>
-            </div>
-          ))}
+            );
+          })}
 
           {isProcessing && (
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-12 md:col-span-2">
-                <div className="text-xs font-medium tracking-[0.18em] text-[var(--text-3)]">JARVIS</div>
-                <div className="mt-1 text-xs font-mono text-[var(--text-3)]">{new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</div>
-              </div>
-              <div
-                className="col-span-12 md:col-span-10 border border-[var(--stroke-1)] bg-[var(--bg-2)] px-4 py-3"
-                style={{ borderRadius: 'var(--r-1)' }}
-              >
-                <div className="text-sm text-[var(--text-2)] font-mono">Processing…</div>
-                <div className="mt-3 h-px w-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
+            <div className="flex justify-start">
+              <div className="min-w-0 max-w-[92%] md:max-w-[78%]">
+                <div className="text-[11px] font-medium tracking-[0.16em] text-[var(--text-3)]">
+                  JARVIS
+                  <span className="ml-2 font-mono tracking-[0.08em]">
+                    {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                <div
+                  className="mt-2 border border-[var(--stroke-1)] px-4 py-3"
+                  style={{ borderRadius: 'var(--r-2)', background: 'var(--bg-2)', boxShadow: 'var(--shadow-1)' }}
+                >
+                  <div className="text-sm text-[var(--text-2)] font-mono">Processing…</div>
+                  <div className="mt-3 h-px w-full" style={{ background: 'rgba(15,18,23,0.08)' }} />
+                </div>
               </div>
             </div>
           )}

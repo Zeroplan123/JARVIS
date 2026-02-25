@@ -75,8 +75,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)' }}>
       <div
-        className="w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-[var(--stroke-1)] bg-[rgba(16,19,24,0.72)]"
-        style={{ borderRadius: 'var(--r-2)', backdropFilter: 'blur(12px)' }}
+        className="w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-[var(--stroke-1)] bg-[var(--bg-1)]"
+        style={{ borderRadius: 'var(--r-2)', boxShadow: 'var(--shadow-2)' }}
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--stroke-1)]">
           <div>
@@ -103,7 +103,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
                   placeholder="Enter your name"
-                  className="mt-2 w-full h-11 px-4 text-sm border border-[var(--stroke-1)] bg-[var(--bg-1)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:outline-none"
+                  className="jarvis-input mt-2 w-full h-11 px-4 text-sm focus:outline-none"
                   style={{ borderRadius: 'var(--r-1)' }}
                 />
               </div>
@@ -129,7 +129,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose })
                 value={customPersonalityPrompt}
                 onChange={(e) => setCustomPersonalityPrompt(e.target.value)}
                 placeholder={`Contoh:\nKamu adalah teman sejati saya yang menemani saya sepanjang waktu.\nGunakan bahasa Indonesia yang hangat dan suportif.\nJika diminta aksi, keluarkan JSON sesuai format.`}
-                className="mt-3 w-full min-h-[140px] px-4 py-3 text-sm border border-[var(--stroke-1)] bg-[var(--bg-1)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:outline-none"
+                className="jarvis-input mt-3 w-full min-h-[140px] px-4 py-3 text-sm focus:outline-none"
                 style={{ borderRadius: 'var(--r-1)' }}
               />
 

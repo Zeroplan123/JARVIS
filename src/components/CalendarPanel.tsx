@@ -54,7 +54,7 @@ export const CalendarPanel: React.FC = () => {
   }
 
   return (
-    <section className="border border-[var(--stroke-1)] bg-[var(--bg-1)] p-5" style={{ borderRadius: 'var(--r-2)' }}>
+    <section className="jarvis-surface p-5" style={{ borderRadius: 'var(--r-2)' }}>
       <div className="flex items-start justify-between gap-6">
         <div>
           <div className="text-xs font-medium tracking-[0.18em] text-[var(--text-3)]">CALENDAR</div>
@@ -83,7 +83,7 @@ export const CalendarPanel: React.FC = () => {
           <input
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
-            className="mt-2 w-full h-11 px-4 text-sm border border-[var(--stroke-1)] bg-[var(--bg-2)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:outline-none"
+            className="jarvis-input mt-2 w-full h-11 px-4 text-sm focus:outline-none"
             style={{ borderRadius: 'var(--r-1)' }}
             placeholder="Meeting with…"
             disabled={!authenticated}
@@ -95,7 +95,7 @@ export const CalendarPanel: React.FC = () => {
             type="datetime-local"
             value={start}
             onChange={(e) => setStart(e.target.value)}
-            className="mt-2 w-full h-11 px-4 text-sm border border-[var(--stroke-1)] bg-[var(--bg-2)] text-[var(--text-1)] focus:outline-none"
+            className="jarvis-input mt-2 w-full h-11 px-4 text-sm focus:outline-none"
             style={{ borderRadius: 'var(--r-1)' }}
             disabled={!authenticated}
           />
@@ -106,7 +106,7 @@ export const CalendarPanel: React.FC = () => {
             type="datetime-local"
             value={end}
             onChange={(e) => setEnd(e.target.value)}
-            className="mt-2 w-full h-11 px-4 text-sm border border-[var(--stroke-1)] bg-[var(--bg-2)] text-[var(--text-1)] focus:outline-none"
+            className="jarvis-input mt-2 w-full h-11 px-4 text-sm focus:outline-none"
             style={{ borderRadius: 'var(--r-1)' }}
             disabled={!authenticated}
           />

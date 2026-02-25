@@ -5,7 +5,7 @@ export const GoogleConnectPanel: React.FC = () => {
   const { authenticated, loading, error, login, logout, refresh } = useGoogleAuth();
 
   return (
-    <section className="border border-[var(--stroke-1)] bg-[var(--bg-1)] p-5" style={{ borderRadius: 'var(--r-2)' }}>
+    <section className="jarvis-surface p-5" style={{ borderRadius: 'var(--r-2)' }}>
       <div className="flex items-start justify-between gap-6">
         <div>
           <div className="text-xs font-medium tracking-[0.18em] text-[var(--text-3)]">GOOGLE</div>

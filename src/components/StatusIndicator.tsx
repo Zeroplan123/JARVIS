@@ -33,7 +33,7 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
 
       <div
         className="px-3 h-9 border border-[var(--stroke-1)] bg-[var(--bg-2)] flex items-center"
-        style={{ borderRadius: 'var(--r-1)', borderColor: activity !== 'IDLE' ? 'var(--stroke-2)' : 'var(--stroke-1)' }}
+        style={{ borderRadius: 'var(--r-1)', borderColor: activity !== 'IDLE' ? 'rgba(59, 130, 246, 0.28)' : 'var(--stroke-1)' }}
       >
         <span className="text-xs font-mono text-[var(--text-3)]">{activity.toLowerCase()}</span>
       </div>
